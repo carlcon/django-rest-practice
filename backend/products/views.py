@@ -42,9 +42,9 @@ class ProductUpdateAPIView(generics.UpdateAPIView):
     serializer_class = ProductSerializer
     lookup_field = 'pk'
 
-    def perform_create(self, serializer):
+    def perform_update(self, serializer):
         instance = serializer.save()
-        if not instance.content:
+        if instance.content:
             instance.content = instance.title
             #
             
@@ -75,6 +75,8 @@ product_destroy_view = ProductDestroyAPIView.as_view()
     
 
 class ProductMixinView(
+    mixins.DestroyModelMixin,
+    mixins.UpdateModelMixin,
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -94,16 +96,28 @@ class ProductMixinView(
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
     
     def perform_create(self, serializer):
         # serializer.save(user=self.request.user)
         print(serializer.validated_data)
+        
         title = serializer.validated_data.get('title')
         content = serializer.validated_data.get('content') or None
         if content is None:
             content = "This is a single view doing cool stuff."
         serializer.save(content=content)
 
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        # instance.content = "New content edited 2"
+        # instance.title = "New title edited 2"
+        # instance.price = "10.00"
+
+    def perform_destroy(self, instance):
+        return super().perform_destroy(instance)
 
 product_mixin_view = ProductMixinView.as_view()
 
